@@ -26,6 +26,34 @@ fails fast with an actionable message and a distinct exit code when something
 is wrong, and `jev-cli doctor` is the diagnostic you reach for *then*, not
 before every call.
 
+## Running an evaluation
+
+```bash
+jev-cli eval --state <text> --questions <json>
+```
+
+```bash
+jev-cli eval -s "The support agent issued a full refund of \$40 and apologized." -q '{
+  "refunded": {"type": "boolean", "instructions": "Was a refund issued?"},
+  "tone":     {"type": "choice",  "instructions": "What tone did the agent use?",
+               "criteria": {"warm": "friendly and personal", "curt": "terse or dismissive"}},
+  "quality":  {"type": "score",   "instructions": "Rate how well this was handled.",
+               "criteria": ["poor", "acceptable", "excellent"]}
+}'
+```
+
+```json
+{
+  "refunded": { "type": "boolean", "probability": 0.99 },
+  "tone": { "type": "choice", "choice": "warm", "probabilities": { "curt": 0.02, "warm": 0.98 } },
+  "quality": { "type": "score", "score": 1.78, "probabilities": { "0": 0, "1": 0.22, "2": 0.78 } }
+}
+```
+
+That inline form is right for a sentence you are writing yourself. For anything
+that already exists in a file or in a command's output, read **Passing input**
+next — it is the thing most callers get wrong.
+
 ## Passing input: keep content out of the command line
 
 **Default to `--state-file` / `--questions-file`, or a pipe into `-`.** Inline
@@ -69,30 +97,6 @@ Only one input may read stdin. When both are large, pipe one and pass the other
 as a path. Reuse a questions file across calls rather than re-emitting it.
 
 Add `--state-json` when the state is JSON rather than plain text.
-
-## Running an evaluation
-
-```bash
-jev-cli eval --state <text> --questions <json>
-```
-
-```bash
-jev-cli eval -s "The support agent issued a full refund of \$40 and apologized." -q '{
-  "refunded": {"type": "boolean", "instructions": "Was a refund issued?"},
-  "tone":     {"type": "choice",  "instructions": "What tone did the agent use?",
-               "criteria": {"warm": "friendly and personal", "curt": "terse or dismissive"}},
-  "quality":  {"type": "score",   "instructions": "Rate how well this was handled.",
-               "criteria": ["poor", "acceptable", "excellent"]}
-}'
-```
-
-```json
-{
-  "refunded": { "type": "boolean", "probability": 0.99 },
-  "tone": { "type": "choice", "choice": "warm", "probabilities": { "curt": 0.02, "warm": 0.98 } },
-  "quality": { "type": "score", "score": 1.78, "probabilities": { "0": 0, "1": 0.22, "2": 0.78 } }
-}
-```
 
 ## The three question types
 
