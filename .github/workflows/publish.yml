@@ -66,10 +66,23 @@ jobs:
         run: node .github/scripts/check-npm-trust.mjs
 
       - name: Verify and publish package
-        # prepublishOnly runs `bun run verify`, including in dry-run mode.
         run: |
-          args=(--access public --tag "$DIST_TAG")
-          if [[ "$DRY_RUN" == "true" ]]; then
-            args+=(--dry-run)
+          name=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+
+          if [[ "$DRY_RUN" != "true" ]]; then
+            # prepublishOnly runs `bun run verify` before the upload.
+            npm publish --access public --tag "$DIST_TAG"
+            exit 0
           fi
-          npm publish "${args[@]}"
+
+          bun run verify
+          if npm view "$name@$version" version >/dev/null 2>&1; then
+            # Dry-running an already-published version fails on the version
+            # check alone, which says nothing about trust or packaging. The
+            # OIDC exchange was proven above, so validate the tarball instead.
+            echo "::notice::$name@$version is already published; validating the tarball instead of a publish dry run."
+            npm pack --dry-run
+          else
+            npm publish --access public --tag "$DIST_TAG" --dry-run
+          fi

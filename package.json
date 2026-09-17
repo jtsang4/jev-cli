@@ -24,7 +24,7 @@
     "classification"
   ],
   "bin": {
-    "jev-cli": "./dist/cli.js"
+    "jev-cli": "dist/cli.js"
   },
   "files": [
     "dist",

@@ -22,7 +22,11 @@ questions and prints structured JSON answers. It never generates prose.
 - `src/config/`: config file paths, schema, and the yaml-Document-backed store.
 - `src/providers/`: provider resolution and evaluation-model construction.
 - `src/questions.ts`: the validation boundary between untyped JSON and the SDK.
-- `skills/use-jev-cli/SKILL.md`: how coding agents should drive the CLI.
+- `skills/use-jev-cli/SKILL.md`: how coding agents should drive the CLI. Ships
+  in the published package.
+- `.agents/skills/<name>/SKILL.md`: repository-maintenance skills, not
+  published. `.claude/skills/<name>` symlinks to them so both agent runtimes
+  see the same file — add a matching symlink whenever you add a skill.
 
 ## Conventions
 
