@@ -21,21 +21,10 @@ is cheap.
 Do **not** use it to write, summarize, translate, or rewrite anything. It
 cannot produce text.
 
-## Check the setup first
-
-```bash
-jev-cli doctor --offline      # configuration only, no network call
-jev-cli doctor                # also verifies credentials with one tiny request
-```
-
-If it reports a missing key, the user must supply one:
-
-```bash
-jev-cli config set providers.vercel.apiKey <ai-gateway-key>
-```
-
-Never invent a key, and never print one back — `config list` masks keys unless
-`--show-secrets` is passed.
+Just run the evaluation. There is no setup check to perform first — `eval`
+fails fast with an actionable message and a distinct exit code when something
+is wrong, and `jev-cli doctor` is the diagnostic you reach for *then*, not
+before every call.
 
 ## Passing input: keep content out of the command line
 
@@ -176,12 +165,32 @@ keeping stdout clean. Always branch on the exit code:
 | `0` | Success | Parse stdout |
 | `1` | Provider or network failure | Retry once; report if it persists |
 | `2` | Bad usage or invalid questions | Fix the JSON — the message names the offending question id and field |
-| `3` | Missing or rejected credentials | Ask the user to fix the key or account; do not retry |
+| `3` | Missing or rejected credentials | Relay the message to the user; do not retry. See below |
 
 A code `2` message like `questions.quality.criteria must list at least two
-ordered levels, but got 1` points at the exact path to fix. A code `3` message
-carries the provider's own words — an account or billing problem reads
-differently from a bad key, so relay it rather than assuming the key is wrong.
+ordered levels, but got 1` points at the exact path to fix.
+
+### Diagnosing a failure
+
+Only when a call actually fails, and only for codes `1` and `3`:
+
+```bash
+jev-cli doctor --offline   # config, provider, model, key source — no network call
+jev-cli doctor             # the above, plus one tiny live evaluation
+```
+
+Code `3` carries the provider's own words, and they distinguish cases that need
+different fixes — a missing key, a revoked key, an account without billing set
+up, or a model the plan cannot reach all read differently. Relay that message
+rather than assuming the key is wrong, and never invent a key. If one is
+genuinely missing, the user supplies it:
+
+```bash
+jev-cli config set providers.vercel.apiKey <ai-gateway-key>
+```
+
+Never print a key back — `config list` masks them unless `--show-secrets` is
+passed.
 
 ## Configuration reference
 
