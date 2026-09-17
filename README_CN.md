@@ -18,9 +18,9 @@ jev-cli eval -s "客服为用户全额退款 40 美元并致歉。" -q '{
 
 ```json
 {
-  "refunded": { "type": "boolean", "probability": 0.98 },
-  "tone": { "type": "choice", "choice": "warm", "probabilities": { "warm": 0.94, "curt": 0.06 } },
-  "quality": { "type": "score", "score": 1.83, "probabilities": { "0": 0.01, "1": 0.15, "2": 0.84 } }
+  "refunded": { "type": "boolean", "probability": 0.99 },
+  "tone": { "type": "choice", "choice": "warm", "probabilities": { "curt": 0.02, "warm": 0.98 } },
+  "quality": { "type": "score", "score": 1.78, "probabilities": { "0": 0, "1": 0.22, "2": 0.78 } }
 }
 ```
 
