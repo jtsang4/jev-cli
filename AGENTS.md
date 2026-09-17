@@ -28,6 +28,33 @@ questions and prints structured JSON answers. It never generates prose.
   published. `.claude/skills/<name>` symlinks to them so both agent runtimes
   see the same file — add a matching symlink whenever you add a skill.
 
+## Reference documentation
+
+Fetch these `llms.txt` indexes rather than guessing at APIs or crawling docs
+sites — each is an agent-readable table of contents linking `.md` versions of
+every page.
+
+| Source | URL | Use it for |
+| --- | --- | --- |
+| TypeSafe AI (Jev) | https://docs.typesafe.ai/llms.txt | The evaluate contract itself: question primitives (choice/score/noul), state design, patterns (fan-out, composite scoring, hierarchical classification), cookbooks, model jaggedness |
+| AI SDK | https://ai-sdk.dev/llms.txt | `experimental_evaluate`, provider interfaces, evaluation model spec |
+| Vercel AI Gateway | https://vercel.com/docs/llms.txt | Gateway routing, authentication, pricing and free-vs-paid credit tiers, rate limits |
+| Bun | https://bun.com/llms.txt | Build flags, `bun test`, `Bun.YAML`, `bun link`, lockfile behavior |
+
+Two things worth knowing before designing anything around Jev, both from the
+TypeSafe docs and both easy to get wrong:
+
+- **State and questions share one budget of ~32,000 tokens (~150,000
+  characters), and Jev accepts text only.** You cannot hand it a codebase; you
+  hand it a pre-built index and keep the material small.
+- **Questions must be atomic.** A judgment that needs several factors weighed
+  together should be several questions combined by your own code. Batching is
+  nearly free — the docs measure 13 questions in one call as 11.5x cheaper and
+  9.6x faster than 13 calls, with identical answers.
+
+npm's own docs have no `llms.txt`; use https://docs.npmjs.com/trusted-publishers
+directly for release-path questions.
+
 ## Conventions
 
 - Question and answer types come from `@ai-sdk/provider`
