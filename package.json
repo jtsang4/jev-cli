@@ -1,0 +1,61 @@
+{
+  "name": "@jtsang/jev-cli",
+  "version": "0.1.0",
+  "description": "Command-line interface for TypeSafe AI's Jev evaluation model — evaluate typed questions against shared state and get structured JSON back",
+  "type": "module",
+  "license": "MIT",
+  "author": "jtsang4",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jtsang4/jev-cli.git"
+  },
+  "homepage": "https://github.com/jtsang4/jev-cli#readme",
+  "bugs": {
+    "url": "https://github.com/jtsang4/jev-cli/issues"
+  },
+  "keywords": [
+    "jev",
+    "typesafe-ai",
+    "evaluation",
+    "ai-gateway",
+    "vercel",
+    "cli",
+    "llm",
+    "classification"
+  ],
+  "bin": {
+    "jev-cli": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "skills",
+    "README.md",
+    "README_CN.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "bun build src/cli.ts --outfile=dist/cli.js --target=node --format=esm --packages=external --banner='#!/usr/bin/env node' && chmod +x dist/cli.js",
+    "dev": "bun run src/cli.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit",
+    "check": "npm pack --dry-run",
+    "verify": "bun test && bun run typecheck && bun run build",
+    "prepublishOnly": "bun run verify"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@ai-sdk/gateway": "^4.0.85",
+    "@ai-sdk/provider": "^4.0.17",
+    "ai": "^7.0.105",
+    "yaml": "^2.9.1"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.2",
+    "typescript": "^7.0.2"
+  }
+}

@@ -1,0 +1,75 @@
+name: Publish to npm
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Verify npm trust and the package without publishing
+        type: boolean
+        default: true
+        required: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: latest
+
+      # Node supplies the npm CLI, which is what performs the OIDC exchange:
+      # `bun publish` has no trusted-publishing support.
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+          package-manager-cache: false
+
+      - name: Validate release ref
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, appendFileSync } from 'node:fs';
+          const { name, version } = JSON.parse(readFileSync('package.json', 'utf8'));
+          const expected = `refs/tags/v${version}`;
+          const mainDryRun = process.env.DRY_RUN === 'true' && process.env.GITHUB_REF === 'refs/heads/main';
+          if (name !== '@jtsang/jev-cli' || (process.env.GITHUB_REF !== expected && !mainDryRun)) {
+            throw new Error(`Publish requires ${expected}; only dry runs may use main.`);
+          }
+          appendFileSync(process.env.GITHUB_ENV, `DIST_TAG=${version.includes('-') ? 'next' : 'latest'}\n`);
+          NODE
+          git merge-base --is-ancestor HEAD origin/main
+
+      - name: Install locked dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Verify npm trusted publisher
+        run: node .github/scripts/check-npm-trust.mjs
+
+      - name: Verify and publish package
+        # prepublishOnly runs `bun run verify`, including in dry-run mode.
+        run: |
+          args=(--access public --tag "$DIST_TAG")
+          if [[ "$DRY_RUN" == "true" ]]; then
+            args+=(--dry-run)
+          fi
+          npm publish "${args[@]}"
