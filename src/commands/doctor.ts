@@ -3,8 +3,9 @@ import { experimental_evaluate as evaluate } from 'ai';
 
 import { maskSecret } from '../config/schema.ts';
 import { loadConfigFile, readConfig } from '../config/store.ts';
-import { ExitCode, JevCliError } from '../errors.ts';
+import { ExitCode } from '../errors.ts';
 import { createEvaluationModel, resolveProvider } from '../providers/index.ts';
+import { toProviderError } from '../provider-errors.ts';
 
 export const DOCTOR_HELP = `Check the configuration and, by default, the credentials.
 
@@ -76,20 +77,7 @@ export async function runDoctor(argv: string[]): Promise<number> {
     );
     return ExitCode.Success;
   } catch (error) {
-    const status = (error as { statusCode?: number }).statusCode;
-    const message = error instanceof Error ? error.message : String(error);
     out.write(`live check    failed\n`);
-    if (status === 401 || status === 403) {
-      throw new JevCliError(
-        'authentication_failed',
-        `The provider rejected the API key (HTTP ${status}). Update it with: jev-cli config set providers.${resolved.provider}.apiKey <key>`,
-        { exitCode: ExitCode.Config, cause: error },
-      );
-    }
-    throw new JevCliError('provider_error', message, {
-      exitCode: ExitCode.Runtime,
-      ...(status === undefined ? {} : { details: { statusCode: status } }),
-      cause: error,
-    });
+    throw toProviderError(error, { provider: resolved.provider });
   }
 }

@@ -2,11 +2,12 @@ import { parseArgs } from 'node:util';
 import { experimental_evaluate as evaluate } from 'ai';
 
 import { readConfig } from '../config/store.ts';
-import { ExitCode, JevCliError, usageError, validationError } from '../errors.ts';
+import { ExitCode, usageError, validationError } from '../errors.ts';
 import { StdinReader, resolveInput } from '../input.ts';
 import { printJson } from '../output.ts';
 import { parseQuestions } from '../questions.ts';
 import { createEvaluationModel, resolveProvider } from '../providers/index.ts';
+import { toProviderError } from '../provider-errors.ts';
 
 export const EVALUATE_HELP = `Evaluate typed questions against one shared state.
 
@@ -121,7 +122,7 @@ export async function runEvaluate(argv: string[]): Promise<number> {
       ...(timeoutMs === undefined ? {} : { abortSignal: AbortSignal.timeout(timeoutMs) }),
     });
   } catch (error) {
-    throw toEvaluationError(error, timeoutMs);
+    throw toProviderError(error, { provider: resolved.provider, timeoutMs });
   }
 
   if (values.full) {
@@ -140,34 +141,4 @@ export async function runEvaluate(argv: string[]): Promise<number> {
     printJson(result.answers, { compact: values.compact });
   }
   return ExitCode.Success;
-}
-
-/** Turn SDK/provider failures into CLI errors with a useful exit code. */
-function toEvaluationError(error: unknown, timeoutMs: number | undefined): JevCliError {
-  if (error instanceof JevCliError) return error;
-
-  const name = error instanceof Error ? error.name : '';
-  if (name === 'TimeoutError' || name === 'AbortError') {
-    return new JevCliError(
-      'timeout',
-      timeoutMs === undefined ? 'The evaluation request was aborted.' : `The evaluation request exceeded --timeout ${timeoutMs}ms.`,
-      { exitCode: ExitCode.Runtime, cause: error },
-    );
-  }
-
-  const status = (error as { statusCode?: number }).statusCode;
-  if (status === 401 || status === 403) {
-    return new JevCliError(
-      'authentication_failed',
-      `The provider rejected the API key (HTTP ${status}). Check it with: jev-cli config list --show-secrets`,
-      { exitCode: ExitCode.Config, cause: error },
-    );
-  }
-
-  const message = error instanceof Error ? error.message : String(error);
-  return new JevCliError('provider_error', message, {
-    exitCode: ExitCode.Runtime,
-    ...(status === undefined ? {} : { details: { statusCode: status } }),
-    cause: error,
-  });
 }
