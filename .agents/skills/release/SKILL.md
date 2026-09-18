@@ -204,12 +204,24 @@ Confirm the exact version exists and the intended dist-tag points at it, and
 reconcile the registry `gitHead` (or provenance source commit) with the release
 HEAD. If a higher version was published concurrently, do not move `latest` back.
 
-**Registry reads lag behind writes.** The packument endpoint can return
-`{"error":"Not found"}` for minutes after a successful publish while the
-version-specific endpoint already serves the new release. Check
-`https://registry.npmjs.org/@jtsang%2Fjev-cli/<version>` and
-`npm access list packages @jtsang` before concluding anything failed, and retry
-with bounds. Never claim npm publication on a successful tag push alone.
+**Registry reads lag behind writes, and every read endpoint can lag.** For up
+to a few minutes after a successful publish, `npm view` may report `E404`, the
+packument may return `{"error":"Not found"}`, and the version-specific endpoint
+`https://registry.npmjs.org/@jtsang%2Fjev-cli/<version>` may return
+`"version not found: <version>"` — all at once, with nothing wrong. Do not
+treat any single read as authoritative proof of failure, and do not rerun the
+workflow or bump the version on a 404 alone.
+
+Proof that the publish happened lives in the run log, not the registry: the
+`Verify and publish package` step prints `Publishing to
+https://registry.npmjs.org/ with tag <dist-tag>` followed by a provenance
+statement and its transparency-log URL. Once you have seen those lines with
+`DRY_RUN: false`, the release is out; the only open question is when it becomes
+visible. Poll with bounded retry (roughly every 10s for a couple of minutes)
+until `npm view "@jtsang/jev-cli@<version>" version` answers, then continue the
+checks below. `npm access list packages @jtsang` is a useful cross-check when
+even that stalls. Never claim npm publication on a successful tag push alone —
+the tag push only starts the workflow.
 
 Finally, confirm the artifact actually installs and runs:
 
