@@ -1,6 +1,6 @@
 {
   "name": "@jtsang/jev-cli",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "Command-line interface for TypeSafe AI's Jev evaluation model — evaluate typed questions against shared state and get structured JSON back",
   "type": "module",
   "license": "MIT",
