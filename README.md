@@ -34,7 +34,7 @@ The published binary runs on Node 22+ or Bun.
 
 ## Set up
 
-Get a key from the [TypeSafe AI dashboard](https://console.typesafe.ai/settings/keys), then:
+Get a key from the [TypeSafe AI dashboard](https://console.typesafe.ai/keys), then:
 
 ```bash
 jev-cli config init
@@ -106,7 +106,7 @@ Only the active provider's settings are read, so both can live in the file at on
 
 | `provider` | Default model | Key from | Environment fallback |
 | --- | --- | --- | --- |
-| `jev` *(default)* | `jev-latest` | [TypeSafe AI](https://console.typesafe.ai/settings/keys) | `JEV_CLI_API_KEY`, `TYPESAFE_API_KEY`, `TYPESAFE_AI_API_KEY` |
+| `jev` *(default)* | `jev-latest` | [TypeSafe AI](https://console.typesafe.ai/keys) | `JEV_CLI_API_KEY`, `TYPESAFE_API_KEY`, `TYPESAFE_AI_API_KEY` |
 | `vercel` | `typesafe-ai/jev` | [Vercel AI Gateway](https://vercel.com/dashboard/ai-gateway) | `JEV_CLI_API_KEY`, `AI_GATEWAY_API_KEY` |
 
 Precedence is **CLI flag > environment > config file** — handy in CI, where you can skip the config file entirely.

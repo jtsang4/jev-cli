@@ -60,7 +60,7 @@ provider: jev
 
 providers:
   jev:
-    # TypeSafe AI key: https://console.typesafe.ai/settings/keys
+    # TypeSafe AI key: https://console.typesafe.ai/keys
     # Environment fallback: JEV_CLI_API_KEY, TYPESAFE_API_KEY, TYPESAFE_AI_API_KEY.
     apiKey: ""
 

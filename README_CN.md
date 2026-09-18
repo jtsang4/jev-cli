@@ -34,7 +34,7 @@ bun install -g @jtsang/jev-cli   # 或：npm install -g @jtsang/jev-cli
 
 ## 配置
 
-在 [TypeSafe AI 控制台](https://console.typesafe.ai/settings/keys)获取 API Key，然后：
+在 [TypeSafe AI 控制台](https://console.typesafe.ai/keys)获取 API Key，然后：
 
 ```bash
 jev-cli config init
@@ -112,7 +112,7 @@ providers:
 
 | `provider` | 默认模型 | key 获取地址 | 环境变量回退 |
 | --- | --- | --- | --- |
-| `jev`（默认） | `jev-latest` | [TypeSafe AI](https://console.typesafe.ai/settings/keys) | `JEV_CLI_API_KEY`、`TYPESAFE_API_KEY`、`TYPESAFE_AI_API_KEY` |
+| `jev`（默认） | `jev-latest` | [TypeSafe AI](https://console.typesafe.ai/keys) | `JEV_CLI_API_KEY`、`TYPESAFE_API_KEY`、`TYPESAFE_AI_API_KEY` |
 | `vercel` | `typesafe-ai/jev` | [Vercel AI Gateway](https://vercel.com/dashboard/ai-gateway) | `JEV_CLI_API_KEY`、`AI_GATEWAY_API_KEY` |
 
 优先级为**命令行参数 > 环境变量 > 配置文件**——在 CI 中直接设环境变量即可，无需配置文件。

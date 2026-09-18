@@ -28,7 +28,7 @@ Getting started:
     -q '{"refunded":{"type":"boolean","instructions":"Was a refund issued?"}}'
 
 Providers:
-  jev       TypeSafe AI's own API (default; keys from https://console.typesafe.ai/settings/keys)
+  jev       TypeSafe AI's own API (default; keys from https://console.typesafe.ai/keys)
   vercel    Vercel AI Gateway
 
 Run "jev-cli <command> --help" for command-specific options.
