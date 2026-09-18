@@ -34,11 +34,18 @@ bun install -g @jtsang/jev-cli   # 或：npm install -g @jtsang/jev-cli
 
 ## 配置
 
-在 [Vercel AI Gateway 控制台](https://vercel.com/dashboard/ai-gateway)获取 API Key，然后：
+先选一个 provider：`jev` 直连 TypeSafe AI 官方 API，`vercel` 走 AI Gateway 转发。
 
 ```bash
 jev-cli config init
+
+# TypeSafe AI 官方——在 https://console.typesafe.ai/settings/keys 获取 key
+jev-cli config set provider jev
+jev-cli config set providers.jev.apiKey <你的-key>
+
+# ……或 Vercel AI Gateway——在 https://vercel.com/dashboard/ai-gateway 获取 key
 jev-cli config set providers.vercel.apiKey <你的-key>
+
 jev-cli doctor
 ```
 
@@ -55,7 +62,7 @@ jev-cli eval  -s, --state <文本>          -q, --questions <json>
               --compact  输出单行 JSON
 
 jev-cli config init | path | list | get <key> | set <key> <value> | unset <key>
-jev-cli doctor [--offline]
+jev-cli doctor [--offline] [--provider <名称>] [--model <id>]
 ```
 
 两个输入都支持用 `-` 读取 stdin，但一次调用中只能有一个这么做：
@@ -80,7 +87,7 @@ git diff | jev-cli eval --state-file - --questions-file ./checks.json
 - `score` 是 `[0, 等级数-1]` 区间内的小数位置，为概率加权平均值，而非下标。
 - `choice` 原样返回选项名，所以选项名应直接取代码里要 switch 的值。
 
-`choice` 和 `score` 的置信度由 TypeSafe 单独给出，加 `--full` 后可在 `providerMetadata.typesafe.confidence` 中读到。
+`choice` 和 `score` 的置信度由 TypeSafe 单独给出，加 `--full` 后可在 `providerMetadata` 中读到：`jev` provider 下位于 `jev.answers.<id>.confidence`，走 gateway 时位于 `typesafe.confidence`。
 
 所有 question 针对同一个 state **并行且相互隔离**地评估，因此多问几个几乎不增加成本——但每个问题都必须能独立成立。保持问题原子化，把组合逻辑放回自己的代码里。
 
@@ -89,17 +96,30 @@ git diff | jev-cli eval --state-file - --questions-file ./checks.json
 位于 `~/.jev-cli/config.yaml`，以 `0600` 权限写入。可用 `JEV_CLI_HOME` 覆盖目录。
 
 ```yaml
-provider: vercel
+provider: jev
 providers:
+  jev:
+    apiKey: "..."
+    model: jev-latest
+    # baseURL: https://api.typesafe.ai/v1
   vercel:
     apiKey: "vck_..."
     model: typesafe-ai/jev
     # baseURL: https://ai-gateway.vercel.sh/v4/ai
 ```
 
-优先级为**命令行参数 > 环境变量 > 配置文件**。环境变量依次是 `JEV_CLI_API_KEY`、`AI_GATEWAY_API_KEY`——在 CI 中直接设环境变量即可，无需配置文件。
+只有当前 `provider` 对应的配置会被读取，因此两套配置可以同时留在文件里。
 
-`provider` 目前只接受 `vercel`。`jev` 已预留给 TypeSafe 官方 API，在实现之前会被拒绝。
+| `provider` | 默认模型 | key 获取地址 | 环境变量回退 |
+| --- | --- | --- | --- |
+| `jev` | `jev-latest` | [TypeSafe AI](https://console.typesafe.ai/settings/keys) | `JEV_CLI_API_KEY`、`TYPESAFE_API_KEY`、`TYPESAFE_AI_API_KEY` |
+| `vercel`（默认） | `typesafe-ai/jev` | [Vercel AI Gateway](https://vercel.com/dashboard/ai-gateway) | `JEV_CLI_API_KEY`、`AI_GATEWAY_API_KEY` |
+
+优先级为**命令行参数 > 环境变量 > 配置文件**——在 CI 中直接设环境变量即可，无需配置文件。
+
+用 `jev-cli config set provider <名称>` 永久切换，或用 `--provider <名称>` 临时切换单次调用。注意 `JEV_CLI_API_KEY` 对当前生效的 provider 一律生效：如果两个 provider 都配好了，请改用各自专属的环境变量，否则同一个 key 会被发给两边。
+
+`jev` provider 的 `model` 可填 `jev-latest`、`jev-preview`，或锁定具体版本如 `jev-1.13.0`。一旦校准了置信度阈值，建议锁版本，因为别名会随新版本发布而改变指向。
 
 `config list` 默认对 key 做掩码，除非显式加 `--show-secrets`。
 

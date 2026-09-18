@@ -157,7 +157,9 @@ jev-cli eval --state-file - -q "$CHECKS" | jq -e '.deploy_ok.probability > 0.9' 
 
 Add `--full` for usage, warnings, and `providerMetadata` — where TypeSafe
 reports `confidence` for choice and score answers, which is separate from the
-probabilities. Add `--compact` for single-line JSON.
+probabilities. On the `jev` provider it lands at
+`providerMetadata.jev.answers.<id>.confidence`. Add `--compact` for single-line
+JSON.
 
 ## Exit codes and errors
 
@@ -190,8 +192,11 @@ rather than assuming the key is wrong, and never invent a key. If one is
 genuinely missing, the user supplies it:
 
 ```bash
-jev-cli config set providers.vercel.apiKey <ai-gateway-key>
+jev-cli config set providers.<provider>.apiKey <key>
 ```
+
+Run `jev-cli doctor --offline` first to see which provider is active; the key
+belongs under that provider's name (`jev` or `vercel`).
 
 Never print a key back — `config list` masks them unless `--show-secrets` is
 passed.
@@ -202,19 +207,23 @@ Config lives at `~/.jev-cli/config.yaml` (override the directory with
 `JEV_CLI_HOME`), written `0600`.
 
 ```bash
-jev-cli config path                       # where the file is
-jev-cli config list                       # every value, keys masked
-jev-cli config get providers.vercel.model
-jev-cli config set providers.vercel.model typesafe-ai/jev
-jev-cli config unset providers.vercel.baseURL
+jev-cli config path                    # where the file is
+jev-cli config list                    # every value, keys masked
+jev-cli config get providers.jev.model
+jev-cli config set providers.jev.model jev-latest
+jev-cli config unset providers.jev.baseURL
 ```
 
-Precedence is **CLI flag > environment (`JEV_CLI_API_KEY`, then
-`AI_GATEWAY_API_KEY`) > config file**. In CI, set `JEV_CLI_API_KEY` and skip the
-config file entirely.
+Two providers reach the same model:
 
-`provider` currently accepts only `vercel` (Vercel AI Gateway). The value `jev`
-is reserved for TypeSafe's official API and is rejected until implemented.
+| `provider` | Default model | Environment fallback |
+| --- | --- | --- |
+| `jev` | `jev-latest` | `JEV_CLI_API_KEY`, `TYPESAFE_API_KEY`, `TYPESAFE_AI_API_KEY` |
+| `vercel` *(default)* | `typesafe-ai/jev` | `JEV_CLI_API_KEY`, `AI_GATEWAY_API_KEY` |
+
+Precedence is **CLI flag > environment > config file**. In CI, set
+`JEV_CLI_API_KEY` and skip the config file entirely. `--provider` and `--model`
+override the file for a single call.
 
 ## Going further
 

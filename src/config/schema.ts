@@ -1,12 +1,20 @@
-/** Providers the CLI knows about. Only `vercel` can run today. */
+/**
+ * Providers the CLI knows about: `vercel` routes through the AI Gateway,
+ * `jev` talks to TypeSafe AI's own API.
+ */
 export const KNOWN_PROVIDERS = ['vercel', 'jev'] as const;
 export type ProviderName = (typeof KNOWN_PROVIDERS)[number];
 
-/** Providers with a working implementation. `jev` is reserved for TypeSafe's official API. */
-export const IMPLEMENTED_PROVIDERS: readonly ProviderName[] = ['vercel'];
+/** Providers with a working implementation. */
+export const IMPLEMENTED_PROVIDERS: readonly ProviderName[] = ['vercel', 'jev'];
 
 export const DEFAULT_PROVIDER: ProviderName = 'vercel';
-export const DEFAULT_MODEL = 'typesafe-ai/jev';
+
+/** Each provider names the same model differently: the gateway namespaces it. */
+export const DEFAULT_MODELS: Record<ProviderName, string> = {
+  vercel: 'typesafe-ai/jev',
+  jev: 'jev-latest',
+};
 
 export interface ProviderConfig {
   apiKey?: string;
@@ -25,7 +33,7 @@ export interface JevCliConfig {
  */
 export const API_KEY_ENV_VARS: Record<string, readonly string[]> = {
   vercel: ['JEV_CLI_API_KEY', 'AI_GATEWAY_API_KEY'],
-  jev: ['JEV_CLI_API_KEY', 'TYPESAFE_AI_API_KEY'],
+  jev: ['JEV_CLI_API_KEY', 'TYPESAFE_API_KEY', 'TYPESAFE_AI_API_KEY'],
 };
 
 /** A config key is secret when its final segment is `apiKey`. Drives masking in `config list`. */
@@ -44,8 +52,8 @@ export const CONFIG_TEMPLATE = `# jev-cli configuration
 #
 # Precedence for every value: CLI flag > environment variable > this file.
 
-# Active provider. Only "vercel" is implemented today; "jev" is reserved for
-# TypeSafe AI's official API once it becomes available.
+# Active provider: "vercel" routes through the Vercel AI Gateway, "jev" calls
+# TypeSafe AI's own API. Only the active provider's settings are read.
 provider: vercel
 
 providers:
@@ -55,8 +63,20 @@ providers:
     apiKey: ""
 
     # Evaluation model routed through the gateway.
-    model: ${DEFAULT_MODEL}
+    model: ${DEFAULT_MODELS.vercel}
 
     # Uncomment only to target a non-default gateway endpoint.
     # baseURL: https://ai-gateway.vercel.sh/v4/ai
+
+  jev:
+    # TypeSafe AI key: https://docs.typesafe.ai
+    # Environment fallback: JEV_CLI_API_KEY, TYPESAFE_API_KEY, TYPESAFE_AI_API_KEY.
+    apiKey: ""
+
+    # "jev-latest" tracks the current stable release. Pin a version such as
+    # "jev-1.13.0" when confidence thresholds are calibrated against it.
+    model: ${DEFAULT_MODELS.jev}
+
+    # Uncomment only to target a non-default TypeSafe endpoint.
+    # baseURL: https://api.typesafe.ai/v1
 `;

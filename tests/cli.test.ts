@@ -135,6 +135,20 @@ describe('eval input validation', () => {
     expect(parsed.error.message).toContain('config set providers.vercel.apiKey');
   });
 
+  test('--provider jev without a key exits 3 naming the jev key', async () => {
+    const { stderr, exitCode } = await run([
+      'eval',
+      '--provider',
+      'jev',
+      '-s',
+      'some state',
+      '-q',
+      '{"q":{"type":"boolean","instructions":"x"}}',
+    ]);
+    expect(exitCode).toBe(3);
+    expect(JSON.parse(stderr).error.message).toContain('config set providers.jev.apiKey');
+  });
+
   test('questions can be read from stdin with "-"', async () => {
     const { stderr, exitCode } = await run(
       ['eval', '-s', 'some state', '-q', '-'],
@@ -180,5 +194,30 @@ describe('doctor', () => {
     expect(stdout).toContain('provider      vercel');
     expect(stdout).toContain('model         typesafe-ai/jev');
     expect(stdout).toContain('vck_************mnop');
+  });
+
+  test('--offline reports the jev provider and its default model', async () => {
+    await run(['config', 'set', 'provider', 'jev']);
+    await run(['config', 'set', 'providers.jev.apiKey', 'ts_abcdefghijklmnop']);
+    const { stdout, exitCode } = await run(['doctor', '--offline']);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('provider      jev');
+    expect(stdout).toContain('model         jev-latest');
+    expect(stdout).toContain('ts_a***********mnop');
+  });
+
+  test('--provider overrides the configured provider', async () => {
+    await run(['config', 'set', 'providers.jev.apiKey', 'ts_abcdefghijklmnop']);
+    const { stdout, exitCode } = await run([
+      'doctor',
+      '--offline',
+      '--provider',
+      'jev',
+      '--model',
+      'jev-1.13.0',
+    ]);
+    expect(exitCode).toBe(0);
+    expect(stdout).toContain('provider      jev');
+    expect(stdout).toContain('model         jev-1.13.0');
   });
 });

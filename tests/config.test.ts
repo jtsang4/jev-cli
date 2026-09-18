@@ -144,10 +144,59 @@ describe('resolveProvider', () => {
     }
   });
 
-  test('the reserved jev provider is rejected until implemented', () => {
-    expect(() => resolveProvider({ provider: 'jev' }, {}, { JEV_CLI_API_KEY: 'k' })).toThrow(
-      /reserved but not implemented/,
+  test('the jev provider resolves with its own default model', () => {
+    const resolved = resolveProvider({ provider: 'jev' }, {}, { TYPESAFE_API_KEY: 'ts_key' });
+    expect(resolved.provider).toBe('jev');
+    expect(resolved.model).toBe('jev-latest');
+    expect(resolved.apiKeySource).toContain('TYPESAFE_API_KEY');
+  });
+
+  test('JEV_CLI_API_KEY still beats the provider-specific variable', () => {
+    const resolved = resolveProvider(
+      { provider: 'jev' },
+      {},
+      { JEV_CLI_API_KEY: 'shared', TYPESAFE_API_KEY: 'specific' },
     );
+    expect(resolved.apiKey).toBe('shared');
+  });
+
+  test('a missing jev key names the jev config path', () => {
+    try {
+      resolveProvider({ provider: 'jev' }, {}, {});
+      throw new Error('expected resolveProvider to throw');
+    } catch (error) {
+      expect((error as { exitCode?: number }).exitCode).toBe(3);
+      expect((error as Error).message).toContain('jev-cli config set providers.jev.apiKey');
+    }
+  });
+
+  test('both providers can be configured at once and switched between', () => {
+    const config = {
+      provider: 'vercel',
+      providers: {
+        vercel: { apiKey: 'vck_key' },
+        jev: { apiKey: 'apik_key' },
+      },
+    };
+
+    const viaFile = resolveProvider(config, {}, {});
+    expect(viaFile.provider).toBe('vercel');
+    expect(viaFile.apiKey).toBe('vck_key');
+
+    // Switching reads the other block; neither key has to be re-entered.
+    const viaFlag = resolveProvider(config, { provider: 'jev' }, {});
+    expect(viaFlag.provider).toBe('jev');
+    expect(viaFlag.apiKey).toBe('apik_key');
+    expect(viaFlag.model).toBe('jev-latest');
+
+    const switched = resolveProvider({ ...config, provider: 'jev' }, {}, {});
+    expect(switched.apiKey).toBe('apik_key');
+  });
+
+  test('provider-specific env vars keep both providers usable from the environment', () => {
+    const env = { TYPESAFE_API_KEY: 'apik_env', AI_GATEWAY_API_KEY: 'vck_env' };
+    expect(resolveProvider({ provider: 'jev' }, {}, env).apiKey).toBe('apik_env');
+    expect(resolveProvider({ provider: 'vercel' }, {}, env).apiKey).toBe('vck_env');
   });
 
   test('unknown providers are rejected', () => {

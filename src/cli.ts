@@ -22,10 +22,15 @@ Options:
 
 Getting started:
   jev-cli config init
-  jev-cli config set providers.vercel.apiKey <ai-gateway-key>
+  jev-cli config set provider jev
+  jev-cli config set providers.jev.apiKey <typesafe-api-key>
   jev-cli doctor
   jev-cli eval -s "The agent issued a full refund." \\
     -q '{"refunded":{"type":"boolean","instructions":"Was a refund issued?"}}'
+
+Providers:
+  jev       TypeSafe AI's own API (keys from https://typesafe.ai)
+  vercel    Vercel AI Gateway (default)
 
 Run "jev-cli <command> --help" for command-specific options.
 Docs: ${pkg.homepage}

@@ -23,10 +23,10 @@ Usage:
   jev-cli config unset <key>           Remove one value
 
 Keys are dotted paths and values are stored as strings:
-  provider
-  providers.vercel.apiKey
-  providers.vercel.model
-  providers.vercel.baseURL
+  provider                             vercel (AI Gateway) or jev (TypeSafe AI)
+  providers.<provider>.apiKey
+  providers.<provider>.model
+  providers.<provider>.baseURL
 
 API keys are masked by default and the file is written with 0600 permissions.
 `;

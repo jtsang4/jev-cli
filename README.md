@@ -34,11 +34,18 @@ The published binary runs on Node 22+ or Bun.
 
 ## Set up
 
-Get an API key from the [Vercel AI Gateway dashboard](https://vercel.com/dashboard/ai-gateway), then:
+Pick a provider: `jev` calls TypeSafe AI's API directly, `vercel` routes through the AI Gateway.
 
 ```bash
 jev-cli config init
+
+# TypeSafe AI — key from https://console.typesafe.ai/settings/keys
+jev-cli config set provider jev
+jev-cli config set providers.jev.apiKey <your-key>
+
+# …or the Vercel AI Gateway — key from https://vercel.com/dashboard/ai-gateway
 jev-cli config set providers.vercel.apiKey <your-key>
+
 jev-cli doctor
 ```
 
@@ -55,7 +62,7 @@ jev-cli eval  -s, --state <text>          -q, --questions <json>
               --compact  emit single-line JSON
 
 jev-cli config init | path | list | get <key> | set <key> <value> | unset <key>
-jev-cli doctor [--offline]
+jev-cli doctor [--offline] [--provider <name>] [--model <id>]
 ```
 
 Both inputs accept `-` to read from stdin, though only one may do so per invocation:
@@ -74,7 +81,7 @@ Every question needs `instructions`. Instructions and criteria descriptions may 
 | `choice` | **Required.** Option name → description (or `null`) | `{"type":"choice","choice":"warm","probabilities":{…}}` |
 | `score` | **Required.** Array of **≥2** levels, lowest first | `{"type":"score","score":1.83,"probabilities":{…}}` |
 
-A `score` is a fractional position in `[0, levels-1]` — the probability-weighted mean, not an index. Confidence for `choice` and `score` answers is reported separately under `providerMetadata.typesafe.confidence` when you pass `--full`.
+A `score` is a fractional position in `[0, levels-1]` — the probability-weighted mean, not an index. Confidence for `choice` and `score` answers is reported under `providerMetadata` when you pass `--full`: at `jev.answers.<id>.confidence` on the `jev` provider, and at `typesafe.confidence` through the gateway.
 
 Questions are evaluated in parallel and in isolation against the same state, so adding questions costs almost nothing — but each one must stand on its own. Keep them atomic and combine the results in your own code.
 
@@ -83,17 +90,30 @@ Questions are evaluated in parallel and in isolation against the same state, so 
 `~/.jev-cli/config.yaml`, written with `0600` permissions. Override the directory with `JEV_CLI_HOME`.
 
 ```yaml
-provider: vercel
+provider: jev
 providers:
+  jev:
+    apiKey: "..."
+    model: jev-latest
+    # baseURL: https://api.typesafe.ai/v1
   vercel:
     apiKey: "vck_..."
     model: typesafe-ai/jev
     # baseURL: https://ai-gateway.vercel.sh/v4/ai
 ```
 
-Precedence is **CLI flag > environment > config file**. The environment variables are `JEV_CLI_API_KEY`, then `AI_GATEWAY_API_KEY` — handy in CI, where you can skip the config file entirely.
+Only the active provider's settings are read, so both can live in the file at once.
 
-`provider` currently accepts only `vercel`. The value `jev` is reserved for TypeSafe's official API and is rejected until it is implemented.
+| `provider` | Default model | Key from | Environment fallback |
+| --- | --- | --- | --- |
+| `jev` | `jev-latest` | [TypeSafe AI](https://console.typesafe.ai/settings/keys) | `JEV_CLI_API_KEY`, `TYPESAFE_API_KEY`, `TYPESAFE_AI_API_KEY` |
+| `vercel` *(default)* | `typesafe-ai/jev` | [Vercel AI Gateway](https://vercel.com/dashboard/ai-gateway) | `JEV_CLI_API_KEY`, `AI_GATEWAY_API_KEY` |
+
+Precedence is **CLI flag > environment > config file** — handy in CI, where you can skip the config file entirely.
+
+Switch with `jev-cli config set provider <name>`, or per call with `--provider <name>`. Note that `JEV_CLI_API_KEY` applies to whichever provider is active: if you keep both configured, set the provider-specific variables instead, or the same key gets sent to both.
+
+On the `jev` provider, `model` takes `jev-latest`, `jev-preview`, or a pinned release such as `jev-1.13.0`. Pin the version once you have calibrated confidence thresholds, since the aliases move when a release ships.
 
 Keys are masked in `config list` output unless you pass `--show-secrets`.
 

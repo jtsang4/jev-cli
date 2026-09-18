@@ -3,13 +3,15 @@ import type { Experimental_EvaluationModelV4 as EvaluationModelV4 } from '@ai-sd
 import { configError, usageError } from '../errors.ts';
 import {
   API_KEY_ENV_VARS,
-  DEFAULT_MODEL,
+  DEFAULT_MODELS,
   DEFAULT_PROVIDER,
   IMPLEMENTED_PROVIDERS,
   KNOWN_PROVIDERS,
   type JevCliConfig,
+  type ProviderName,
 } from '../config/schema.ts';
 import { configPath } from '../config/paths.ts';
+import { createJevEvaluationModel } from './jev.ts';
 import { createVercelEvaluationModel } from './vercel.ts';
 
 export interface ResolvedProvider {
@@ -44,12 +46,14 @@ export function resolveProvider(
   }
   if (!(IMPLEMENTED_PROVIDERS as readonly string[]).includes(provider)) {
     throw usageError(
-      `Provider "${provider}" is reserved but not implemented yet. Use "${DEFAULT_PROVIDER}" for now.`,
+      `Provider "${provider}" is reserved but not implemented yet. Use ${IMPLEMENTED_PROVIDERS.map(
+        (name) => `"${name}"`,
+      ).join(' or ')} for now.`,
     );
   }
 
   const settings = config.providers?.[provider] ?? {};
-  const model = overrides.model ?? settings.model ?? DEFAULT_MODEL;
+  const model = overrides.model ?? settings.model ?? DEFAULT_MODELS[provider as ProviderName];
 
   const envVars = API_KEY_ENV_VARS[provider] ?? [];
   let apiKey = '';
@@ -91,6 +95,8 @@ export function createEvaluationModel(resolved: ResolvedProvider): EvaluationMod
   switch (resolved.provider) {
     case 'vercel':
       return createVercelEvaluationModel(resolved);
+    case 'jev':
+      return createJevEvaluationModel(resolved);
     default:
       throw usageError(`Provider "${resolved.provider}" is not implemented.`);
   }

@@ -10,12 +10,14 @@ import { toProviderError } from '../provider-errors.ts';
 export const DOCTOR_HELP = `Check the configuration and, by default, the credentials.
 
 Usage:
-  jev-cli doctor [--offline] [--show-secrets]
+  jev-cli doctor [--offline] [--show-secrets] [--provider <name>] [--model <id>]
 
 Options:
-      --offline        Validate configuration only; make no network request
-      --show-secrets   Print the API key in full instead of masking it
-  -h, --help           Show this help
+      --provider <name>  Check this provider instead of the configured one
+      --model <id>       Check this evaluation model instead of the configured one
+      --offline          Validate configuration only; make no network request
+      --show-secrets     Print the API key in full instead of masking it
+  -h, --help             Show this help
 
 The live check sends one tiny boolean evaluation to confirm the key and model work.
 `;
@@ -25,6 +27,8 @@ export async function runDoctor(argv: string[]): Promise<number> {
     args: argv,
     allowPositionals: false,
     options: {
+      provider: { type: 'string' },
+      model: { type: 'string' },
       offline: { type: 'boolean', default: false },
       'show-secrets': { type: 'boolean', default: false },
       help: { type: 'boolean', short: 'h', default: false },
@@ -43,7 +47,7 @@ export async function runDoctor(argv: string[]): Promise<number> {
   const config = await readConfig();
   let resolved;
   try {
-    resolved = resolveProvider(config, {});
+    resolved = resolveProvider(config, { provider: values.provider, model: values.model });
   } catch (error) {
     out.write(`provider      unresolved\n\n`);
     throw error;
