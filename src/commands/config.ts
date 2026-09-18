@@ -23,7 +23,7 @@ Usage:
   jev-cli config unset <key>           Remove one value
 
 Keys are dotted paths and values are stored as strings:
-  provider                             vercel (AI Gateway) or jev (TypeSafe AI)
+  provider                             jev (TypeSafe AI, default) or vercel (AI Gateway)
   providers.<provider>.apiKey
   providers.<provider>.model
   providers.<provider>.baseURL
@@ -85,7 +85,7 @@ async function initConfig(force: boolean): Promise<number> {
   // genuinely resets the file.
   const { parseDocument } = await import('yaml');
   await saveConfigFile({ ...file, document: parseDocument(CONFIG_TEMPLATE) });
-  process.stderr.write(`Wrote ${file.path}\nNext: jev-cli config set providers.vercel.apiKey <key>\n`);
+  process.stderr.write(`Wrote ${file.path}\nNext: jev-cli config set providers.jev.apiKey <key>\n`);
   return ExitCode.Success;
 }
 
@@ -112,7 +112,7 @@ async function listConfig(showSecrets: boolean): Promise<number> {
 
 async function getConfig(rest: string[]): Promise<number> {
   const key = rest[0];
-  if (key === undefined) throw usageError('config get requires a key, e.g. providers.vercel.model');
+  if (key === undefined) throw usageError('config get requires a key, e.g. providers.jev.model');
 
   const file = await loadConfigFile();
   const value = getConfigValue(file, key);
@@ -125,7 +125,7 @@ async function getConfig(rest: string[]): Promise<number> {
 async function setConfig(rest: string[]): Promise<number> {
   const [key, value] = rest;
   if (key === undefined || value === undefined) {
-    throw usageError('config set requires a key and a value, e.g. providers.vercel.apiKey vck_123');
+    throw usageError('config set requires a key and a value, e.g. providers.jev.apiKey apik_123');
   }
   const file = await loadConfigFile();
   setConfigValue(file, key, value);
@@ -138,7 +138,7 @@ async function setConfig(rest: string[]): Promise<number> {
 
 async function unsetConfig(rest: string[]): Promise<number> {
   const key = rest[0];
-  if (key === undefined) throw usageError('config unset requires a key, e.g. providers.vercel.baseURL');
+  if (key === undefined) throw usageError('config unset requires a key, e.g. providers.jev.baseURL');
 
   const file = await loadConfigFile();
   if (!file.exists) {

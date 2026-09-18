@@ -103,16 +103,16 @@ describe('maskSecret', () => {
 });
 
 describe('resolveProvider', () => {
-  test('defaults to vercel and the default model', () => {
-    const resolved = resolveProvider({ providers: { vercel: { apiKey: 'k' } } }, {}, {});
-    expect(resolved.provider).toBe('vercel');
-    expect(resolved.model).toBe('typesafe-ai/jev');
+  test('defaults to jev and its default model', () => {
+    const resolved = resolveProvider({ providers: { jev: { apiKey: 'k' } } }, {}, {});
+    expect(resolved.provider).toBe('jev');
+    expect(resolved.model).toBe('jev-latest');
     expect(resolved.apiKeySource).toContain('config file');
   });
 
   test('environment beats the config file', () => {
     const resolved = resolveProvider(
-      { providers: { vercel: { apiKey: 'from-file' } } },
+      { providers: { jev: { apiKey: 'from-file' } } },
       {},
       { JEV_CLI_API_KEY: 'from-env' },
     );
@@ -120,14 +120,24 @@ describe('resolveProvider', () => {
     expect(resolved.apiKeySource).toContain('JEV_CLI_API_KEY');
   });
 
-  test('AI_GATEWAY_API_KEY works as a fallback', () => {
-    const resolved = resolveProvider({}, {}, { AI_GATEWAY_API_KEY: 'gateway-key' });
+  test('TYPESAFE_API_KEY works as a fallback', () => {
+    const resolved = resolveProvider({}, {}, { TYPESAFE_API_KEY: 'apik_key' });
+    expect(resolved.apiKey).toBe('apik_key');
+  });
+
+  test('AI_GATEWAY_API_KEY still works for the vercel provider', () => {
+    const resolved = resolveProvider(
+      { provider: 'vercel' },
+      {},
+      { AI_GATEWAY_API_KEY: 'gateway-key' },
+    );
     expect(resolved.apiKey).toBe('gateway-key');
+    expect(resolved.model).toBe('typesafe-ai/jev');
   });
 
   test('flags beat everything', () => {
     const resolved = resolveProvider(
-      { providers: { vercel: { apiKey: 'k', model: 'from-file' } } },
+      { providers: { jev: { apiKey: 'k', model: 'from-file' } } },
       { model: 'from-flag' },
       {},
     );
@@ -140,15 +150,15 @@ describe('resolveProvider', () => {
       throw new Error('expected resolveProvider to throw');
     } catch (error) {
       expect((error as { exitCode?: number }).exitCode).toBe(3);
-      expect((error as Error).message).toContain('jev-cli config set providers.vercel.apiKey');
+      expect((error as Error).message).toContain('jev-cli config set providers.jev.apiKey');
     }
   });
 
-  test('the jev provider resolves with its own default model', () => {
-    const resolved = resolveProvider({ provider: 'jev' }, {}, { TYPESAFE_API_KEY: 'ts_key' });
-    expect(resolved.provider).toBe('jev');
-    expect(resolved.model).toBe('jev-latest');
-    expect(resolved.apiKeySource).toContain('TYPESAFE_API_KEY');
+  test('the vercel provider resolves with its own default model', () => {
+    const resolved = resolveProvider({ provider: 'vercel' }, {}, { AI_GATEWAY_API_KEY: 'vck_key' });
+    expect(resolved.provider).toBe('vercel');
+    expect(resolved.model).toBe('typesafe-ai/jev');
+    expect(resolved.apiKeySource).toContain('AI_GATEWAY_API_KEY');
   });
 
   test('JEV_CLI_API_KEY still beats the provider-specific variable', () => {
@@ -160,37 +170,27 @@ describe('resolveProvider', () => {
     expect(resolved.apiKey).toBe('shared');
   });
 
-  test('a missing jev key names the jev config path', () => {
-    try {
-      resolveProvider({ provider: 'jev' }, {}, {});
-      throw new Error('expected resolveProvider to throw');
-    } catch (error) {
-      expect((error as { exitCode?: number }).exitCode).toBe(3);
-      expect((error as Error).message).toContain('jev-cli config set providers.jev.apiKey');
-    }
-  });
-
   test('both providers can be configured at once and switched between', () => {
     const config = {
-      provider: 'vercel',
+      provider: 'jev',
       providers: {
-        vercel: { apiKey: 'vck_key' },
         jev: { apiKey: 'apik_key' },
+        vercel: { apiKey: 'vck_key' },
       },
     };
 
     const viaFile = resolveProvider(config, {}, {});
-    expect(viaFile.provider).toBe('vercel');
-    expect(viaFile.apiKey).toBe('vck_key');
+    expect(viaFile.provider).toBe('jev');
+    expect(viaFile.apiKey).toBe('apik_key');
 
     // Switching reads the other block; neither key has to be re-entered.
-    const viaFlag = resolveProvider(config, { provider: 'jev' }, {});
-    expect(viaFlag.provider).toBe('jev');
-    expect(viaFlag.apiKey).toBe('apik_key');
-    expect(viaFlag.model).toBe('jev-latest');
+    const viaFlag = resolveProvider(config, { provider: 'vercel' }, {});
+    expect(viaFlag.provider).toBe('vercel');
+    expect(viaFlag.apiKey).toBe('vck_key');
+    expect(viaFlag.model).toBe('typesafe-ai/jev');
 
-    const switched = resolveProvider({ ...config, provider: 'jev' }, {}, {});
-    expect(switched.apiKey).toBe('apik_key');
+    const switched = resolveProvider({ ...config, provider: 'vercel' }, {}, {});
+    expect(switched.apiKey).toBe('vck_key');
   });
 
   test('provider-specific env vars keep both providers usable from the environment', () => {

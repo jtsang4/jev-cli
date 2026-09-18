@@ -9,7 +9,7 @@ import { ExitCode, JevCliError } from './errors.ts';
  */
 export function toProviderError(
   error: unknown,
-  options: { provider: string; timeoutMs?: number | undefined } = { provider: 'vercel' },
+  options: { provider: string; timeoutMs?: number | undefined } = { provider: 'jev' },
 ): JevCliError {
   if (error instanceof JevCliError) return error;
 

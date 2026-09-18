@@ -2,7 +2,7 @@
 
 > English | [简体中文](./README_CN.md)
 
-A command-line interface for **[Jev](https://vercel.com/ai-gateway/models/jev)**, TypeSafe AI's evaluation model. Give it a state and some typed questions; get structured JSON back.
+A command-line interface for **[Jev](https://docs.typesafe.ai)**, TypeSafe AI's evaluation model. Give it a state and some typed questions; get structured JSON back.
 
 Jev is a "System One" model: instead of generating prose, it judges shared state against typed questions and returns choices, scores, and probabilities your code can branch on. That makes it a good fit for classification, routing, rubric scoring, and automated verification — and a poor fit for writing text, which it cannot do.
 
@@ -34,19 +34,19 @@ The published binary runs on Node 22+ or Bun.
 
 ## Set up
 
-Pick a provider: `jev` calls TypeSafe AI's API directly, `vercel` routes through the AI Gateway.
+Get a key from the [TypeSafe AI dashboard](https://console.typesafe.ai/settings/keys), then:
 
 ```bash
 jev-cli config init
-
-# TypeSafe AI — key from https://console.typesafe.ai/settings/keys
-jev-cli config set provider jev
 jev-cli config set providers.jev.apiKey <your-key>
-
-# …or the Vercel AI Gateway — key from https://vercel.com/dashboard/ai-gateway
-jev-cli config set providers.vercel.apiKey <your-key>
-
 jev-cli doctor
+```
+
+The default provider is `jev`, which calls TypeSafe AI's API directly. If you would rather route through the [Vercel AI Gateway](https://vercel.com/dashboard/ai-gateway), switch to it:
+
+```bash
+jev-cli config set provider vercel
+jev-cli config set providers.vercel.apiKey <your-gateway-key>
 ```
 
 `doctor` sends one tiny evaluation to confirm the key and model actually work. Use `--offline` to check the configuration without a network call.
@@ -106,8 +106,8 @@ Only the active provider's settings are read, so both can live in the file at on
 
 | `provider` | Default model | Key from | Environment fallback |
 | --- | --- | --- | --- |
-| `jev` | `jev-latest` | [TypeSafe AI](https://console.typesafe.ai/settings/keys) | `JEV_CLI_API_KEY`, `TYPESAFE_API_KEY`, `TYPESAFE_AI_API_KEY` |
-| `vercel` *(default)* | `typesafe-ai/jev` | [Vercel AI Gateway](https://vercel.com/dashboard/ai-gateway) | `JEV_CLI_API_KEY`, `AI_GATEWAY_API_KEY` |
+| `jev` *(default)* | `jev-latest` | [TypeSafe AI](https://console.typesafe.ai/settings/keys) | `JEV_CLI_API_KEY`, `TYPESAFE_API_KEY`, `TYPESAFE_AI_API_KEY` |
+| `vercel` | `typesafe-ai/jev` | [Vercel AI Gateway](https://vercel.com/dashboard/ai-gateway) | `JEV_CLI_API_KEY`, `AI_GATEWAY_API_KEY` |
 
 Precedence is **CLI flag > environment > config file** — handy in CI, where you can skip the config file entirely.
 

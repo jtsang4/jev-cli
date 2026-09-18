@@ -2,7 +2,7 @@
 
 > [English](./README.md) | 简体中文
 
-**[Jev](https://vercel.com/ai-gateway/models/jev)**（TypeSafe AI 的评估模型）的命令行工具。传入一段 state 和若干带类型的 question，返回结构化 JSON。
+**[Jev](https://docs.typesafe.ai)**（TypeSafe AI 的评估模型）的命令行工具。传入一段 state 和若干带类型的 question，返回结构化 JSON。
 
 Jev 是一个 "System One" 模型：它不生成文字，而是针对共享的 state 回答带类型的问题，返回选项、分数和概率，供代码直接分支判断。因此它适合做分类、路由、评分卡和自动校验，不适合用来写文本——它根本不生成文本。
 
@@ -34,19 +34,19 @@ bun install -g @jtsang/jev-cli   # 或：npm install -g @jtsang/jev-cli
 
 ## 配置
 
-先选一个 provider：`jev` 直连 TypeSafe AI 官方 API，`vercel` 走 AI Gateway 转发。
+在 [TypeSafe AI 控制台](https://console.typesafe.ai/settings/keys)获取 API Key，然后：
 
 ```bash
 jev-cli config init
-
-# TypeSafe AI 官方——在 https://console.typesafe.ai/settings/keys 获取 key
-jev-cli config set provider jev
 jev-cli config set providers.jev.apiKey <你的-key>
-
-# ……或 Vercel AI Gateway——在 https://vercel.com/dashboard/ai-gateway 获取 key
-jev-cli config set providers.vercel.apiKey <你的-key>
-
 jev-cli doctor
+```
+
+默认 provider 是 `jev`，直连 TypeSafe AI 官方 API。如果你更想走 [Vercel AI Gateway](https://vercel.com/dashboard/ai-gateway) 转发，切过去即可：
+
+```bash
+jev-cli config set provider vercel
+jev-cli config set providers.vercel.apiKey <你的-gateway-key>
 ```
 
 `doctor` 会发起一次极小的评估请求，确认 key 和模型确实可用。加 `--offline` 则只校验配置，不发网络请求。
@@ -112,8 +112,8 @@ providers:
 
 | `provider` | 默认模型 | key 获取地址 | 环境变量回退 |
 | --- | --- | --- | --- |
-| `jev` | `jev-latest` | [TypeSafe AI](https://console.typesafe.ai/settings/keys) | `JEV_CLI_API_KEY`、`TYPESAFE_API_KEY`、`TYPESAFE_AI_API_KEY` |
-| `vercel`（默认） | `typesafe-ai/jev` | [Vercel AI Gateway](https://vercel.com/dashboard/ai-gateway) | `JEV_CLI_API_KEY`、`AI_GATEWAY_API_KEY` |
+| `jev`（默认） | `jev-latest` | [TypeSafe AI](https://console.typesafe.ai/settings/keys) | `JEV_CLI_API_KEY`、`TYPESAFE_API_KEY`、`TYPESAFE_AI_API_KEY` |
+| `vercel` | `typesafe-ai/jev` | [Vercel AI Gateway](https://vercel.com/dashboard/ai-gateway) | `JEV_CLI_API_KEY`、`AI_GATEWAY_API_KEY` |
 
 优先级为**命令行参数 > 环境变量 > 配置文件**——在 CI 中直接设环境变量即可，无需配置文件。
 

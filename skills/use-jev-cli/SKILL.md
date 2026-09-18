@@ -218,8 +218,8 @@ Two providers reach the same model:
 
 | `provider` | Default model | Environment fallback |
 | --- | --- | --- |
-| `jev` | `jev-latest` | `JEV_CLI_API_KEY`, `TYPESAFE_API_KEY`, `TYPESAFE_AI_API_KEY` |
-| `vercel` *(default)* | `typesafe-ai/jev` | `JEV_CLI_API_KEY`, `AI_GATEWAY_API_KEY` |
+| `jev` *(default)* | `jev-latest` | `JEV_CLI_API_KEY`, `TYPESAFE_API_KEY`, `TYPESAFE_AI_API_KEY` |
+| `vercel` | `typesafe-ai/jev` | `JEV_CLI_API_KEY`, `AI_GATEWAY_API_KEY` |
 
 Precedence is **CLI flag > environment > config file**. In CI, set
 `JEV_CLI_API_KEY` and skip the config file entirely. `--provider` and `--model`
